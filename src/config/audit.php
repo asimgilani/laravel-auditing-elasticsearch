@@ -126,7 +126,7 @@ return [
     |
     */
 
-    'driver' => Iconscout\Auditing\Drivers\ElasticSearch::class,
+    'driver' => Pingvi\Auditing\Drivers\ElasticSearch::class,
 
     /*
     |--------------------------------------------------------------------------

@@ -11,12 +11,12 @@
  * with this source code.
  */
 
-namespace Iconscout\Auditing;
+namespace Pingvi\Auditing;
 
 use Illuminate\Support\ServiceProvider;
 
-use Iconscout\Auditing\Console\IndexCommand;
-use Iconscout\Auditing\Console\DeleteCommand;
+use Pingvi\Auditing\Console\IndexCommand;
+use Pingvi\Auditing\Console\DeleteCommand;
 
 class ElasticSearchAuditingServiceProvider extends ServiceProvider
 {

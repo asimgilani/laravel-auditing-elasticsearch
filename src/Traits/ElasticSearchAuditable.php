@@ -11,7 +11,7 @@
  * with this source code.
  */
 
-namespace Iconscout\Auditing\Traits;
+namespace Pingvi\Auditing\Traits;
 
 use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Facades\Config;

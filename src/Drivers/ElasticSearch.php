@@ -11,13 +11,13 @@
  * with this source code.
  */
 
-namespace Iconscout\Auditing\Drivers;
+namespace Pingvi\Auditing\Drivers;
 
 use Carbon\Carbon;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Facades\Config;
-use Iconscout\Auditing\Jobs\AuditIndexQueuedModels;
-use Iconscout\Auditing\Jobs\AuditDeleteQueuedModels;
+use Pingvi\Auditing\Jobs\AuditIndexQueuedModels;
+use Pingvi\Auditing\Jobs\AuditDeleteQueuedModels;
 use OwenIt\Auditing\Contracts\Audit;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Contracts\AuditDriver;
@@ -61,9 +61,9 @@ class ElasticSearch implements AuditDriver
     public function audit(Auditable $model): Audit
     {
         $implementation = Config::get('audit.implementation', AuditModel::class);
-        
+
         $this->storeAudit($model->toAudit());
-        
+
         return new $implementation;
     }
 
@@ -90,15 +90,15 @@ class ElasticSearch implements AuditDriver
         if (Config::get('audit.queue', false)) {
             return $this->indexQueueAuditDocument($model);
         }
-        
+
         return $this->indexAuditDocument($model);
     }
 
     public function indexQueueAuditDocument($model)
     {
         dispatch((new AuditIndexQueuedModels($model))
-                ->onQueue($this->syncWithSearchUsingQueue())
-                ->onConnection($this->syncWithSearchUsing()));
+            ->onQueue($this->syncWithSearchUsingQueue())
+            ->onConnection($this->syncWithSearchUsing()));
 
         return true;
     }
@@ -108,15 +108,15 @@ class ElasticSearch implements AuditDriver
         if (Config::get('audit.queue', false)) {
             return $this->deleteQueueAuditDocument($model);
         }
-        
+
         return $this->deleteAuditDocument($model);
     }
 
     public function deleteQueueAuditDocument($model)
     {
         dispatch((new AuditDeleteQueuedModels($model))
-                ->onQueue($this->syncWithSearchUsingQueue())
-                ->onConnection($this->syncWithSearchUsing()));
+            ->onQueue($this->syncWithSearchUsingQueue())
+            ->onConnection($this->syncWithSearchUsing()));
 
         return true;
     }
@@ -146,13 +146,14 @@ class ElasticSearch implements AuditDriver
         $params = [
             'index' => $this->index,
             'type' => $this->type,
-            'id' => Uuid::uuid4(),
+            'id' => Uuid::uuid4()->toString(),
             'body' => $model
         ];
 
         try {
             return $this->client->index($params);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
     }
 
     public function searchAuditDocument($model)
@@ -199,7 +200,7 @@ class ElasticSearch implements AuditDriver
 
         if (count($audits)) {
             $audit_ids = array_column($audits, '_id');
-            
+
             foreach ($audit_ids as $audit_id) {
                 $params['body'][] = [
                     'delete' => [
@@ -210,8 +211,8 @@ class ElasticSearch implements AuditDriver
                 ];
 
             }
-            
-            return (bool) $this->client->bulk($params);
+
+            return (bool)$this->client->bulk($params);
         }
 
         return false;
@@ -239,7 +240,7 @@ class ElasticSearch implements AuditDriver
                 [
                     'add' => [
                         'index' => $this->index,
-                        'alias' => $this->index.'_write'
+                        'alias' => $this->index . '_write'
                     ]
                 ]
             ]
