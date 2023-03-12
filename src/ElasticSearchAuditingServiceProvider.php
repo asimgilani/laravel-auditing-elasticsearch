@@ -33,9 +33,9 @@ class ElasticSearchAuditingServiceProvider extends ServiceProvider
                 DeleteCommand::class,
             ]);
 
-            $this->publishes([
-                __DIR__.'/config/audit.php' => $this->app['path.config'].DIRECTORY_SEPARATOR.'audit.php',
-            ]);
+            //$this->publishes([
+            //    __DIR__.'/config/audit.php' => $this->app['path.config'].DIRECTORY_SEPARATOR.'audit.php',
+            //]);
         }
     }
 }
