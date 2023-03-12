@@ -19,6 +19,7 @@
         "elasticsearch",
         "es"
     ],
+    "minimum-stability": "dev",
     "type": "package",
     "repositories": [
         {
@@ -45,7 +46,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Iconscout\\Auditing\\": "src/"
+            "Pingvi\\Auditing\\": "src/"
         }
     },
     "extra": {
