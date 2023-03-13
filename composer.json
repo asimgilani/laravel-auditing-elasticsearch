@@ -19,7 +19,6 @@
         "elasticsearch",
         "es"
     ],
-    "minimum-stability": "dev",
     "type": "package",
     "repositories": [
         {
