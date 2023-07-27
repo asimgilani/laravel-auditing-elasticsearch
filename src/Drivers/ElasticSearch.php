@@ -61,9 +61,9 @@ class ElasticSearch implements AuditDriver
     public function audit(Auditable $model): Audit
     {
         $implementation = Config::get('audit.implementation', AuditModel::class);
-        
+
         $this->storeAudit($model->toAudit());
-        
+
         return new $implementation;
     }
 
@@ -90,15 +90,15 @@ class ElasticSearch implements AuditDriver
         if (Config::get('audit.queue', false)) {
             return $this->indexQueueAuditDocument($model);
         }
-        
+
         return $this->indexAuditDocument($model);
     }
 
     public function indexQueueAuditDocument($model)
     {
         dispatch((new AuditIndexQueuedModels($model))
-                ->onQueue($this->syncWithSearchUsingQueue())
-                ->onConnection($this->syncWithSearchUsing()));
+            ->onQueue($this->syncWithSearchUsingQueue())
+            ->onConnection($this->syncWithSearchUsing()));
 
         return true;
     }
@@ -108,15 +108,15 @@ class ElasticSearch implements AuditDriver
         if (Config::get('audit.queue', false)) {
             return $this->deleteQueueAuditDocument($model);
         }
-        
+
         return $this->deleteAuditDocument($model);
     }
 
     public function deleteQueueAuditDocument($model)
     {
         dispatch((new AuditDeleteQueuedModels($model))
-                ->onQueue($this->syncWithSearchUsingQueue())
-                ->onConnection($this->syncWithSearchUsing()));
+            ->onQueue($this->syncWithSearchUsingQueue())
+            ->onConnection($this->syncWithSearchUsing()));
 
         return true;
     }
@@ -145,14 +145,15 @@ class ElasticSearch implements AuditDriver
     {
         $params = [
             'index' => $this->index,
-            'type' => $this->type,
-            'id' => Uuid::uuid4(),
-            'body' => $model
+            'type'  => $this->type,
+            'id'    => Uuid::uuid4()->toString(),
+            'body'  => $model,
         ];
 
         try {
             return $this->client->index($params);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
     }
 
     public function searchAuditDocument($model)
@@ -161,32 +162,32 @@ class ElasticSearch implements AuditDriver
 
         $params = [
             'index' => $this->index,
-            'type' => $this->type,
-            'size' => 10000 - $skip,
-            'from' => $skip,
-            'body' => [
+            'type'  => $this->type,
+            'size'  => 10000 - $skip,
+            'from'  => $skip,
+            'body'  => [
                 'query' => [
                     'bool' => [
                         'must' => [
                             [
                                 'term' => [
-                                    'auditable_id' => $model->id
-                                ]
+                                    'auditable_id' => $model->id,
+                                ],
                             ],
                             [
                                 'term' => [
-                                    'auditable_type' => $model->getMorphClass()
-                                ]
-                            ]
-                        ]
-                    ]
+                                    'auditable_type' => $model->getMorphClass(),
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
-                'sort' => [
+                'sort'  => [
                     'created_at' => [
-                        'order' => 'desc'
-                    ]
-                ]
-            ]
+                        'order' => 'desc',
+                    ],
+                ],
+            ],
         ];
 
         return $this->client->search($params);
@@ -199,19 +200,19 @@ class ElasticSearch implements AuditDriver
 
         if (count($audits)) {
             $audit_ids = array_column($audits, '_id');
-            
+
             foreach ($audit_ids as $audit_id) {
                 $params['body'][] = [
                     'delete' => [
                         '_index' => $this->index,
-                        '_type' => $this->type,
-                        '_id' => $audit_id
-                    ]
+                        '_type'  => $this->type,
+                        '_id'    => $audit_id,
+                    ],
                 ];
 
             }
-            
-            return (bool) $this->client->bulk($params);
+
+            return (bool)$this->client->bulk($params);
         }
 
         return false;
@@ -221,12 +222,12 @@ class ElasticSearch implements AuditDriver
     {
         $params = [
             'index' => $this->index,
-            'body' => [
+            'body'  => [
                 'settings' => [
-                    'number_of_shards' => 3,
-                    'number_of_replicas' => 0
-                ]
-            ]
+                    'number_of_shards'   => 3,
+                    'number_of_replicas' => 0,
+                ],
+            ],
         ];
 
         return $this->client->indices()->create($params);
@@ -239,10 +240,10 @@ class ElasticSearch implements AuditDriver
                 [
                     'add' => [
                         'index' => $this->index,
-                        'alias' => $this->index.'_write'
-                    ]
-                ]
-            ]
+                        'alias' => $this->index . '_write',
+                    ],
+                ],
+            ],
         ];
 
         return $this->client->indices()->updateAliases($params);
@@ -251,7 +252,7 @@ class ElasticSearch implements AuditDriver
     public function deleteIndex()
     {
         $deleteParams = [
-            'index' => $this->index
+            'index' => $this->index,
         ];
 
         return $this->client->indices()->delete($deleteParams);
@@ -260,7 +261,7 @@ class ElasticSearch implements AuditDriver
     public function existsIndex()
     {
         $params = [
-            'index' => $this->index
+            'index' => $this->index,
         ];
 
         return $this->client->indices()->exists($params);
@@ -270,72 +271,72 @@ class ElasticSearch implements AuditDriver
     {
         $params = [
             'index' => $this->index,
-            'type' => $this->type,
-            'body' => [
+            'type'  => $this->type,
+            'body'  => [
                 $this->type => [
-                    '_source' => [
-                        'enabled' => true
+                    '_source'    => [
+                        'enabled' => true,
                     ],
                     'properties' => [
-                        'event' => [
-                            'type' => 'string',
-                            'index' => 'not_analyzed'
+                        'event'          => [
+                            'type'  => 'string',
+                            'index' => 'not_analyzed',
                         ],
                         'auditable_type' => [
-                            'type' => 'string',
-                            'index' => 'not_analyzed'
+                            'type'  => 'string',
+                            'index' => 'not_analyzed',
                         ],
-                        'ip_address' => [
-                            'type' => 'string',
-                            'index' => 'not_analyzed'
+                        'ip_address'     => [
+                            'type'  => 'string',
+                            'index' => 'not_analyzed',
                         ],
-                        'url' => [
-                            'type' => 'string',
-                            'index' => 'not_analyzed'
+                        'url'            => [
+                            'type'  => 'string',
+                            'index' => 'not_analyzed',
                         ],
-                        'user_agent' => [
-                            'type' => 'string',
-                            'index' => 'not_analyzed'
+                        'user_agent'     => [
+                            'type'  => 'string',
+                            'index' => 'not_analyzed',
                         ],
-                        'created_at' => [
-                            'type' => 'date',
-                            'format' => 'yyyy-MM-dd HH:mm:ss'
+                        'created_at'     => [
+                            'type'   => 'date',
+                            'format' => 'yyyy-MM-dd HH:mm:ss',
                         ],
-                        'new_values' => [
+                        'new_values'     => [
                             'properties' => [
                                 'created_at' => [
-                                    'type' => 'date',
-                                    'format' => 'yyyy-MM-dd HH:mm:ss'
+                                    'type'   => 'date',
+                                    'format' => 'yyyy-MM-dd HH:mm:ss',
                                 ],
                                 'updated_at' => [
-                                    'type' => 'date',
-                                    'format' => 'yyyy-MM-dd HH:mm:ss'
+                                    'type'   => 'date',
+                                    'format' => 'yyyy-MM-dd HH:mm:ss',
                                 ],
                                 'deleted_at' => [
-                                    'type' => 'date',
-                                    'format' => 'yyyy-MM-dd HH:mm:ss'
-                                ]
-                            ]
+                                    'type'   => 'date',
+                                    'format' => 'yyyy-MM-dd HH:mm:ss',
+                                ],
+                            ],
                         ],
-                        'old_values' => [
+                        'old_values'     => [
                             'properties' => [
                                 'created_at' => [
-                                    'type' => 'date',
-                                    'format' => 'yyyy-MM-dd HH:mm:ss'
+                                    'type'   => 'date',
+                                    'format' => 'yyyy-MM-dd HH:mm:ss',
                                 ],
                                 'updated_at' => [
-                                    'type' => 'date',
-                                    'format' => 'yyyy-MM-dd HH:mm:ss'
+                                    'type'   => 'date',
+                                    'format' => 'yyyy-MM-dd HH:mm:ss',
                                 ],
                                 'deleted_at' => [
-                                    'type' => 'date',
-                                    'format' => 'yyyy-MM-dd HH:mm:ss'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
+                                    'type'   => 'date',
+                                    'format' => 'yyyy-MM-dd HH:mm:ss',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         return $this->client->indices()->putMapping($params);
